@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yulan 评论系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        /* 认证部分 */
+        .auth-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .auth-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #1a73e8;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #1a73e8;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1555c0;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #e8e8e8;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .btn-danger {
+            background-color: #d93026;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #a50e0e;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 用户信息 */
+        .user-info {
+            display: none;
+            padding: 15px;
+            background-color: #f0f7ff;
+            border-left: 4px solid #1a73e8;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .user-info.show {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .user-details {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 18px;
+        }
+
+        .user-name {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        /* 认证表单 */
+        .auth-form {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+
+        .auth-form.show {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* 评论部分 */
+        .comments-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .comments-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        /* 新评论表单 */
+        .new-comment-form {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .comment-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .comment-input:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+        }
+
+        .comment-form-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            justify-content: flex-end;
+        }
+
+        /* 评论列表 */
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .comment-item {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            border-left: 3px solid #1a73e8;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .comment-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .comment-author {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .author-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 16px;
+        }
+
+        .author-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .author-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .author-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            color: #666;
+            transition: color 0.2s;
+        }
+
+        .action-btn:hover {
+            color: #1a73e8;
+        }
+
+        .comment-content {
+            padding: 10px 0;
+            line-height: 1.6;
+            color: #333;
+            word-wrap: break-word;
+        }
+
+        .comment-footer {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .like-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            color: #999;
+            transition: all 0.2s;
+        }
+
+        .like-btn:hover {
+            color: #e53e3e;
+        }
+
+        .like-btn.liked {
+            color: #e53e3e;
+        }
+
+        .like-count {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 12px;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .delete-btn:hover {
+            color: #d93026;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        /* 加载状态 */
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1a73e8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 消息提示 */
+        .message {
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+                margin: 10px auto;
+            }
+
+            .auth-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .comment-form-buttons {
+                flex-direction: column-reverse;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 消息提示 -->
+        <div id="message" class="message"></div>
+
+        <!-- 认证部分 -->
+        <div class="auth-section">
+            <div class="auth-header">👋 开始对话</div>
+
+            <!-- 用户信息 -->
+            <div id="userInfo" class="user-info">
+                <div class="user-details">
+                    <div class="user-avatar" id="userAvatar"></div>
+                    <div>
+                        <div class="user-name" id="userName"></div>
+                        <div id="userEmail" style="font-size: 12px; color: #666;"></div>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="btn btn-danger">退出登录</button>
+            </div>
+
+            <!-- 认证按钮 -->
+            <div id="authButtons" class="auth-buttons">
+                <button id="registerBtn" class="btn btn-primary">注册新账户</button>
+                <button id="loginBtn" class="btn btn-primary">登录</button>
+                <button id="guestBtn" class="btn btn-secondary">游客登录</button>
+            </div>
+
+            <!-- 注册表单 -->
+            <div id="registerForm" class="auth-form">
+                <h3 style="margin-bottom: 15px; font-size: 16px;">创建新账户</h3>
+                <div class="form-group">
+                    <label for="registerEmail">邮箱</label>
+                    <input type="email" id="registerEmail" placeholder="请输入邮箱">
+                </div>
+                <div class="form-group">
+                    <label for="registerName">昵称</label>
+                    <input type="text" id="registerName" placeholder="请输入昵称">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">密码</label>
+                    <input type="password" id="registerPassword" placeholder="请输入密码">
+                </div>
+                <div class="form-buttons">
+                    <button id="registerSubmitBtn" class="btn btn-primary">注册</button>
+                    <button id="registerCancelBtn" class="btn btn-secondary">取消</button>
+                </div>
+            </div>
+
+            <!-- 登录表单 -->
+            <div id="loginForm" class="auth-form">
+                <h3 style="margin-bottom: 15px; font-size: 16px;">登录账户</h3>
+                <div class="form-group">
+                    <label for="loginEmail">邮箱</label>
+                    <input type="email" id="loginEmail" placeholder="请输入邮箱">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword">密码</label>
+                    <input type="password" id="loginPassword" placeholder="请输入密码">
+                </div>
+                <div class="form-buttons">
+                    <button id="loginSubmitBtn" class="btn btn-primary">登录</button>
+                    <button id="loginCancelBtn" class="btn btn-secondary">取消</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 评论部分 -->
+        <div class="comments-section">
+            <div class="comments-header">💬 我们来聊天吧！</div>
+
+            <!-- 新评论表单 -->
+            <div id="commentFormContainer" style="display: none;" class="new-comment-form">
+                <textarea id="commentInput" class="comment-input" placeholder="分享你的想法..."></textarea>
+                <div class="comment-form-buttons">
+                    <button id="submitCommentBtn" class="btn btn-primary">发表评论</button>
+                    <button id="cancelCommentBtn" class="btn btn-secondary">取消</button>
+                </div>
+            </div>
+
+            <!-- 评论列表 -->
+            <div id="commentsList" class="comments-list">
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <div>暂无评论，来成为第一个！</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script>
+        /**
+         * Yulan 评论系统前端逻辑
+         */
+
+        // 当前页面 URL（实际使用时应动态获取）
+        const pageUrl = window.location.href || 'http://localhost:3000/demo';
+
+        // DOM 元素
+        const elements = {
+            // 消息
+            message: document.getElementById('message'),
+
+            // 认证相关
+            userInfo: document.getElementById('userInfo'),
+            userAvatar: document.getElementById('userAvatar'),
+            userName: document.getElementById('userName'),
+            userEmail: document.getElementById('userEmail'),
+            authButtons: document.getElementById('authButtons'),
+            logoutBtn: document.getElementById('logoutBtn'),
+
+            // 注册表单
+            registerBtn: document.getElementById('registerBtn'),
+            registerForm: document.getElementById('registerForm'),
+            registerEmail: document.getElementById('registerEmail'),
+            registerName: document.getElementById('registerName'),
+            registerPassword: document.getElementById('registerPassword'),
+            registerSubmitBtn: document.getElementById('registerSubmitBtn'),
+            registerCancelBtn: document.getElementById('registerCancelBtn'),
+
+            // 登录表单
+            loginBtn: document.getElementById('loginBtn'),
+            loginForm: document.getElementById('loginForm'),
+            loginEmail: document.getElementById('loginEmail'),
+            loginPassword: document.getElementById('loginPassword'),
+            loginSubmitBtn: document.getElementById('loginSubmitBtn'),
+            loginCancelBtn: document.getElementById('loginCancelBtn'),
+
+            // 游客登录
+            guestBtn: document.getElementById('guestBtn'),
+
+            // 评论相关
+            commentFormContainer: document.getElementById('commentFormContainer'),
+            commentInput: document.getElementById('commentInput'),
+            submitCommentBtn: document.getElementById('submitCommentBtn'),
+            cancelCommentBtn: document.getElementById('cancelCommentBtn'),
+            commentsList: document.getElementById('commentsList')
+        };
+
+        /**
+         * 显示消息
+         */
+        function showMessage(text, type = 'success') {
+            elements.message.textContent = text;
+            elements.message.className = `message show ${type}`;
+            setTimeout(() => {
+                elements.message.classList.remove('show');
+            }, 3000);
+        }
+
+        /**
+         * 生成头像
+         */
+        function generateAvatar(name) {
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8'];
+            const index = name.charCodeAt(0) % colors.length;
+            return colors[index];
+        }
+
+        /**
+         * 格式化时间
+         */
+        function formatTime(date) {
+            const now = new Date();
+            const commentDate = new Date(date);
+            const diffMs = now - commentDate;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return '刚刚';
+            if (diffMins < 60) return `${diffMins}分钟前`;
+            if (diffHours < 24) return `${diffHours}小时前`;
+            if (diffDays < 7) return `${diffDays}天前`;
+            return commentDate.toLocaleDateString();
+        }
+
+        /**
+         * 更新用户界面
+         */
+        function updateUI() {
+            if (yulanAPI.isAuthenticated()) {
+                const user = yulanAPI.getCurrentUser();
+                elements.authButtons.style.display = 'none';
+                elements.userInfo.classList.add('show');
+                elements.userAvatar.textContent = user.name[0].toUpperCase();
+                elements.userAvatar.style.backgroundColor = generateAvatar(user.name);
+                elements.userName.textContent = user.name;
+                elements.userEmail.textContent = user.email;
+                elements.commentFormContainer.style.display = 'block';
+            } else {
+                elements.authButtons.style.display = 'flex';
+                elements.userInfo.classList.remove('show');
+                elements.commentFormContainer.style.display = 'none';
+            }
+        }
+
+        /**
+         * 加载评论
+         */
+        async function loadComments() {
+            try {
+                const comments = await yulanAPI.comments.fetch(pageUrl);
+                renderComments(comments);
+            } catch (error) {
+                showMessage('加载评论失败: ' + error.message, 'error');
+            }
+        }
+
+        /**
+         * 渲染评论列表
+         */
+        function renderComments(comments) {
+            if (comments.length === 0) {
+                elements.commentsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <div>暂无评论，来成为第一个！</div>
+                    </div>
+                `;
+                return;
+            }
+
+            elements.commentsList.innerHTML = comments.map(comment => `
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <div class="comment-author">
+                            <div class="author-avatar" style="background-color: ${generateAvatar(comment.userName)}">
+                                ${comment.userName[0].toUpperCase()}
+                            </div>
+                            <div class="author-info">
+                                <div class="author-name">${escapeHtml(comment.userName)}</div>
+                                <div class="author-time">${formatTime(comment.createdAt)}</div>
+                            </div>
+                        </div>
+                        <div class="comment-actions">
+                            ${yulanAPI.getCurrentUser()?.id === comment.userId._id ? `
+                                <button class="delete-btn" onclick="deleteComment('${comment._id}')">删除</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="comment-content">${escapeHtml(comment.content)}</div>
+                    <div class="comment-footer">
+                        <button class="like-btn ${checkIfLiked(comment._id) ? 'liked' : ''}" onclick="toggleLike('${comment._id}', this)">
+                            <span>❤️</span>
+                            <span class="like-count">${comment.likes || 0}</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        /**
+         * 检查是否已点赞
+         */
+        function checkIfLiked(commentId) {
+            // 这里应该有真实的实现，目前简化处理
+            return false;
+        }
+
+        /**
+         * HTML 转义
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        /**
+         * 切换点赞
+         */
+        async function toggleLike(commentId, button) {
+            if (!yulanAPI.isAuthenticated()) {
+                showMessage('请先登录', 'error');
+                return;
+            }
+
+            try {
+                if (button.classList.contains('liked')) {
+                    await yulanAPI.likes.delete(commentId);
+                    button.classList.remove('liked');
+                } else {
+                    await yulanAPI.likes.create(commentId);
+                    button.classList.add('liked');
+                }
+                loadComments();
+            } catch (error) {
+                showMessage('操作失败: ' + error.message, 'error');
+            }
+        }
+
+        /**
+         * 删除评论
+         */
+        async function deleteComment(commentId) {
+            if (!confirm('确定要删除这条评论吗？')) return;
+
+            try {
+                await yulanAPI.comments.delete(commentId);
+                showMessage('评论已删除', 'success');
+                loadComments();
+            } catch (error) {
+                showMessage('删除失败: ' + error.message, 'error');
+            }
+        }
+
+        /**
+         * 发表评论
+         */
+        async function submitComment() {
+            const content = elements.commentInput.value.trim();
+            if (!content) {
+                showMessage('评论不能为空', 'error');
+                return;
+            }
+
+            try {
+                await yulanAPI.comments.create(pageUrl, content);
+                showMessage('评论已发表！', 'success');
+                elements.commentInput.value = '';
+                loadComments();
+            } catch (error) {
+                showMessage('发表失败: ' + error.message, 'error');
+            }
+        }
+
+        // ============ 事件监听 ============
+
+        // 注册
+        elements.registerBtn.addEventListener('click', () => {
+            elements.registerForm.classList.toggle('show');
+        });
+
+        elements.registerCancelBtn.addEventListener('click', () => {
+            elements.registerForm.classList.remove('show');
+        });
+
+        elements.registerSubmitBtn.addEventListener('click', async () => {
+            const email = elements.registerEmail.value.trim();
+            const name = elements.registerName.value.trim();
+            const password = elements.registerPassword.value.trim();
+
+            if (!email || !name || !password) {
+                showMessage('请填写所有字段', 'error');
+                return;
+            }
+
+            try {
+                await yulanAPI.auth.register(email, name, password);
+                showMessage('注册成功！', 'success');
+                elements.registerForm.classList.remove('show');
+                updateUI();
+                loadComments();
+            } catch (error) {
+                showMessage('注册失败: ' + error.message, 'error');
+            }
+        });
+
+        // 登录
+        elements.loginBtn.addEventListener('click', () => {
+            elements.loginForm.classList.toggle('show');
+        });
+
+        elements.loginCancelBtn.addEventListener('click', () => {
+            elements.loginForm.classList.remove('show');
+        });
+
+        elements.loginSubmitBtn.addEventListener('click', async () => {
+            const email = elements.loginEmail.value.trim();
+            const password = elements.loginPassword.value.trim();
+
+            if (!email || !password) {
+                showMessage('请填写所有字段', 'error');
+                return;
+            }
+
+            try {
+                await yulanAPI.auth.login(email, password);
+                showMessage('登录成功！', 'success');
+                elements.loginForm.classList.remove('show');
+                updateUI();
+                loadComments();
+            } catch (error) {
+                showMessage('登录失败: ' + error.message, 'error');
+            }
+        });
+
+        // 游客登录
+        elements.guestBtn.addEventListener('click', async () => {
+            try {
+                await yulanAPI.auth.loginAsGuest();
+                showMessage('游客登录成功！', 'success');
+                updateUI();
+                loadComments();
+            } catch (error) {
+                showMessage('登录失败: ' + error.message, 'error');
+            }
+        });
+
+        // 退出登录
+        elements.logoutBtn.addEventListener('click', () => {
+            yulanAPI.logout();
+            showMessage('已退出登录', 'success');
+            updateUI();
+            loadComments();
+        });
+
+        // 评论
+        elements.submitCommentBtn.addEventListener('click', submitComment);
+        elements.cancelCommentBtn.addEventListener('click', () => {
+            elements.commentInput.value = '';
+        });
+        elements.commentInput.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                submitComment();
+            }
+        });
+
+        // ============ 初始化 ============
+
+        async function init() {
+            console.log('Yulan 评论系统已初始化');
+            updateUI();
+            loadComments();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
